@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import Paper from '@mui/material/Paper';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
 import Grid from '@mui/material/Grid';
@@ -102,105 +101,118 @@ interface Value {
   max: string;
 }
 
+interface Table {
+  showTable: boolean,
+  hand1: Hand
+  hand2: Hand
+  hand3: Hand
+  hand4: Hand
+}
+
 function App() {
-  const [hand1, setHand1] = useState<Hand>({
-    hand: [], position: "East", handConditions: {
-      points: {
-        min: "",
-        max: "",
-      },
-      spades: {
-        min: "",
-        max: "",
-      },
-      hearts: {
-        min: "",
-        max: "",
-      },
-      diamonds: {
-        min: "",
-        max: "",
-      },
-      clubs: {
-        min: "",
-        max: "",
+  const [table1, setTable1] = useState<Table>({
+    showTable: false,
+    hand1: {
+      hand: [], position: "South", handConditions: {
+        points: {
+          min: "",
+          max: "",
+        },
+        spades: {
+          min: "",
+          max: "",
+        },
+        hearts: {
+          min: "",
+          max: "",
+        },
+        diamonds: {
+          min: "",
+          max: "",
+        },
+        clubs: {
+          min: "",
+          max: "",
+        }
+      }
+    },
+    hand2: {
+      hand: [], position: "North", handConditions: {
+        points: {
+          min: "",
+          max: "",
+        },
+        spades: {
+          min: "",
+          max: "",
+        },
+        hearts: {
+          min: "",
+          max: "",
+        },
+        diamonds: {
+          min: "",
+          max: "",
+        },
+        clubs: {
+          min: "",
+          max: "",
+        }
+      }
+    },
+    hand3: {
+      hand: [], position: "West", handConditions: {
+        points: {
+          min: "",
+          max: "",
+        },
+        spades: {
+          min: "",
+          max: "",
+        },
+        hearts: {
+          min: "",
+          max: "",
+        },
+        diamonds: {
+          min: "",
+          max: "",
+        },
+        clubs: {
+          min: "",
+          max: "",
+        }
+      }
+    },
+    hand4: {
+      hand: [], position: "East", handConditions: {
+        points: {
+          min: "",
+          max: "",
+        },
+        spades: {
+          min: "",
+          max: "",
+        },
+        hearts: {
+          min: "",
+          max: "",
+        },
+        diamonds: {
+          min: "",
+          max: "",
+        },
+        clubs: {
+          min: "",
+          max: "",
+        }
       }
     }
   })
-  const [hand2, setHand2] = useState<Hand>({
-    hand: [], position: "North", handConditions: {
-      points: {
-        min: "",
-        max: "",
-      },
-      spades: {
-        min: "",
-        max: "",
-      },
-      hearts: {
-        min: "",
-        max: "",
-      },
-      diamonds: {
-        min: "",
-        max: "",
-      },
-      clubs: {
-        min: "",
-        max: "",
-      }
-    }
-  })
-  const [hand3, setHand3] = useState<Hand>({
-    hand: [], position: "South", handConditions: {
-      points: {
-        min: "",
-        max: "",
-      },
-      spades: {
-        min: "",
-        max: "",
-      },
-      hearts: {
-        min: "",
-        max: "",
-      },
-      diamonds: {
-        min: "",
-        max: "",
-      },
-      clubs: {
-        min: "",
-        max: "",
-      }
-    }
-  })
-  const [hand4, setHand4] = useState<Hand>({
-    hand: [], position: "West", handConditions: {
-      points: {
-        min: "",
-        max: "",
-      },
-      spades: {
-        min: "",
-        max: "",
-      },
-      hearts: {
-        min: "",
-        max: "",
-      },
-      diamonds: {
-        min: "",
-        max: "",
-      },
-      clubs: {
-        min: "",
-        max: "",
-      }
-    }
-  })
+  const [tableView, setTableView] = useState(false)
   const [tiger, setTiger] = useState(false)
   const [remainingCards, setRemainingCards] = useState<Card[]>([])
+  const [checked, setChecked] = React.useState<Card[]>([]);
 
   useEffect(() => {
     console.clear()
@@ -438,47 +450,58 @@ function App() {
     return numberOfClubs;
   }
 
-  const [checked, setChecked] = React.useState<Card[]>([]);
+  function handleToggle(value: Card) {
+    return function () {
+      const currentIndex = checked.indexOf(value);
+      const newChecked = currentIndex === -1 ? [...checked, value] : checked.filter(item => item !== value);
 
-  const handleToggle = (value: Card) => () => {
-    const currentIndex = checked.indexOf(value);
-    const newChecked = [...checked];
+      setChecked(newChecked.sort((a, b) => a.id - b.id));
+    };
+  }
 
-    if (currentIndex === -1) {
-      newChecked.push(value);
-    } else {
-      newChecked.splice(currentIndex, 1);
+  function getConvertedNameOfHand(name: string) {
+    return name[0].toUpperCase() + name.slice(1, -1).toLowerCase() + " " + name.slice(-1).toLowerCase()
+  }
+
+  function customList(param: "coloda" | "hand1" | "hand2" | "hand3" | "hand4") {
+    function getLabelForHand(hand?: Hand) {
+      let foo = getConvertedNameOfHand(param)
+      if (hand) {
+        return `${foo} ${hand.position}`
+      }
+      else {
+        return `Hand Hidden`
+      }
     }
 
-    setChecked(newChecked.sort((a, b) => { return a.id - b.id }));
-  };
-
-  const customList = (param: "left" | "right" | "hand2" | "hand3" | "hand4") => {
     let colodaToShow: Card[] = []
     let label: string = ""
-    let right = hand1.hand
-    if (param === "left") {
+    if (param === "coloda") {
       label = "Coloda (" + remainingCards.length + ")"
       colodaToShow = remainingCards
-    } else if (param === "right") {
-      label = "Hand (" + right.length + ")"
-      colodaToShow = right
+    } else if (param === "hand1") {
+      label = getLabelForHand(table1.hand1)
+      colodaToShow = table1.hand1.hand
     } else if (param === "hand2") {
-      label = "Hand (" + hand2.hand.length + ")"
-      colodaToShow = hand2.hand
+      label = getLabelForHand(table1.hand2)
+      colodaToShow = table1.hand2.hand
     } else if (param === 'hand3') {
-      label = "Hand (" + hand3.hand.length + ")"
-      colodaToShow = hand3.hand
+      label = getLabelForHand(table1.hand3)
+      colodaToShow = table1.hand3.hand
     } else if (param === 'hand4') {
-      label = "Hand (" + hand4.hand.length + ")"
-      colodaToShow = hand4.hand
+      label = getLabelForHand(table1.hand4)
+      colodaToShow = table1.hand4.hand
     }
     colodaToShow = colodaToShow.sort((a, b) => { return a.id - b.id })
+    if (param !== "coloda" && table1.showTable === false) {
+      colodaToShow = []
+      label = getLabelForHand()
+    }
 
     return (
       <div>
-        <Paper sx={{ height: 240, width: 150, overflow: 'auto' }}>
-          <span>{label}</span>
+        <Paper sx={{ height: 240, width: 170, overflow: 'auto' }}>
+          <p style={{ justifyContent: "center", margin: "0px", alignItems: "center", display: "flex" }}>{label}</p>
           <List dense component="div" role="list">
             {colodaToShow.map((value: Card) => {
               const labelId = `transfer-list-item-${value.id}-label`;
@@ -490,16 +513,14 @@ function App() {
                   onClick={handleToggle(value)}
                   className="rame"
                 >
-                  <ListItemIcon>
-                    <Checkbox
-                      checked={checked.indexOf(value) !== -1}
-                      tabIndex={-1}
-                      disableRipple
-                      inputProps={{
-                        'aria-labelledby': labelId,
-                      }}
-                    />
-                  </ListItemIcon>
+                  <Checkbox
+                    checked={checked.indexOf(value) !== -1}
+                    tabIndex={-1}
+                    disableRipple
+                    inputProps={{
+                      'aria-labelledby': labelId,
+                    }}
+                  />
                   <ListItemText id={labelId} primary={`${value.color} ${value.card} (${value.points})`} />
                 </ListItemButton>
               );
@@ -519,74 +540,88 @@ function App() {
   }
 
   const leftChecked = intersection(checked, remainingCards);
-  const rightChecked = intersection(checked, hand1.hand);
+  const rightChecked = intersection(checked, table1.hand1.hand);
 
   const handleCheckedRight = () => {
     let newLeft = not(remainingCards, leftChecked)
     setRemainingCards(newLeft)
-    setHand1({ ...hand1, hand: hand1.hand.concat(leftChecked) })
+    setTable1({ ...table1, hand1: { ...table1.hand1, hand: table1.hand1.hand.concat(leftChecked) } })
+    // setHand1({ ...table1.hand1, hand: table1.hand1.hand.concat(leftChecked) })
     setChecked(not(checked, leftChecked));
   };
 
   const handleCheckedLeft = () => {
     setRemainingCards(remainingCards.concat(rightChecked))
-    setHand1({ ...hand1, hand: not(hand1.hand, rightChecked) })
+    setTable1({ ...table1, hand1: { ...table1.hand1, hand: not(table1.hand1.hand, rightChecked) } })
+    // setHand1({ ...hand1, hand:  })
     setChecked(not(checked, rightChecked));
   };
 
-  function genHand(type: "hand1" | "hand2" | "hand3" | "hand4") {
-    let hand = hand1
+  function genHand(type: "hand1" | "hand2" | "hand3" | "hand4", rem?: Card[]) {
+    let hand = table1.hand1
     if (type === "hand1") {
-      hand = hand1
+      hand = table1.hand1
     } else if (type === 'hand2') {
-      hand = hand2
+      hand = table1.hand2
     } else if (type === "hand3") {
-      hand = hand3
+      hand = table1.hand3
     } else if (type === "hand4") {
-      hand = hand4
+      hand = table1.hand4
     }
-    console.log(hand.handConditions)
-    let generatedHand = getHand(hand, remainingCards, hand.handConditions)
+    let generatedHand = getHand(hand, rem ?? remainingCards, hand.handConditions)
     let newRemainingCards = generatedHand.remainingCards
 
+    let newTable1 = table1
     if (type === "hand1") {
-      setHand1(generatedHand.hand)
+      newTable1 = { ...table1, hand1: generatedHand.hand }
+      // setHand1(generatedHand.hand)
     } else if (type === 'hand2') {
-      setHand2(generatedHand.hand)
+      newTable1 = { ...table1, hand2: generatedHand.hand }
+      // setHand2(generatedHand.hand)
     } else if (type === 'hand3') {
-      setHand3(generatedHand.hand)
+      newTable1 = { ...table1, hand3: generatedHand.hand }
+      // setHand3(generatedHand.hand)
     } else if (type === 'hand4') {
-      setHand4(generatedHand.hand)
+      newTable1 = { ...table1, hand4: generatedHand.hand }
+      // setHand4(generatedHand.hand)
     }
+    setTable1(newTable1)
+
     setRemainingCards(newRemainingCards)
+
+    if (type === "hand3") {
+      genHand("hand4", newRemainingCards)
+    }
+    let validTable = isValidTable(newTable1)
+    if (validTable) {
+      newTable1.showTable = true
+    }
+    else {
+      // genNewTable()
+    }
+    refresh()
   }
 
+  function genNewTable() {
+    genHand("hand1")
+    genHand("hand2")
+    genHand("hand3")
+    genHand("hand4")
+  }
 
-  function setValueForHand(type: string, e: any) {
+  function isValidTable(table: Table) {
+    const count = table.hand1.hand.length +
+      table.hand2.hand.length +
+      table.hand3.hand.length +
+      table.hand4.hand.length;
+    return count === 52;
+  }
+
+  function setValueForHand(e: any, hand: Hand, tableName: "hand2" | "hand3" | "hand4") {
     let newVal = e.target.value;
+    let type = e.target.name
     let miniType = type
-    let foo: HandConditions = {
-      points: {
-        min: "",
-        max: "",
-      },
-      spades: {
-        min: "",
-        max: "",
-      },
-      hearts: {
-        min: "",
-        max: "",
-      },
-      diamonds: {
-        min: "",
-        max: "",
-      },
-      clubs: {
-        min: "",
-        max: "",
-      }
-    }
+    let foo: HandConditions = hand.handConditions
 
     if (type === "minPoints") {
       foo.points.min = newVal
@@ -616,58 +651,234 @@ function App() {
       }
     }
 
-    let newH1 = { ...hand1, handConditions: foo }
-    setHand1(newH1)
+    let newH2 = { ...hand, handConditions: foo }
+    if (tableName === "hand2") {
+      setTable1({ ...table1, hand2: newH2 })
+    }
+    if (tableName === "hand3") {
+      setTable1({ ...table1, hand3: newH2 })
+    }
+    if (tableName === "hand4") {
+      setTable1({ ...table1, hand4: newH2 })
+    }
+    // setHand2(newH2)
     return undefined
   }
 
-  function setValueForHand2(type: string, e: any) {
-    let miniHand1 = { ...hand1 }
-    let newVal = e.target.value;
-    let miniType = type
-    if (type === "minPoints") {
-      miniHand1.handConditions.points.min = newVal
-    } else if (type === "maxPoints") {
-      miniHand1.handConditions.points.max = newVal
-    } else if (type.includes("Max")) {
-      miniType = miniType.replace("number", "").replace("Max", "").toLowerCase().toString()
-      if (miniType === "spades") {
-        miniHand1.handConditions["spades"].max = newVal
-      } else if (miniType === "hearts") {
-        miniHand1.handConditions["hearts"].max = newVal
-      } else if (miniType === "diamonds") {
-        miniHand1.handConditions["diamonds"].max = newVal
-      } else if (miniType === "clubs") {
-        miniHand1.handConditions["clubs"].max = newVal
+  function genTable(tableName: string) {
+    if (tableName === "table1") {
+      let h1 = table1.hand1
+      let h2 = table1.hand2
+      let h3 = table1.hand3
+      let h4 = table1.hand4
+
+      let miniRemCards: Card[] = []
+      if (remainingCards.length !== 0) {
+        miniRemCards = [...remainingCards]
+      } else {
+        h1.hand = []
+        h2.hand = []
+        h3.hand = []
+        h4.hand = []
+        miniRemCards = [...colodaInit]
       }
-    } else if (type.includes("Min")) {
-      miniType = miniType.replace("number", "").replace("Min", "").toLowerCase().toString()
-      if (miniType === "spades") {
-        miniHand1.handConditions["spades"].min = newVal
-      } else if (miniType === "hearts") {
-        miniHand1.handConditions["hearts"].min = newVal
-      } else if (miniType === "diamonds") {
-        miniHand1.handConditions["diamonds"].min = newVal
-      } else if (miniType === "clubs") {
-        miniHand1.handConditions["clubs"].min = newVal
+
+      if (h1.hand.length === 0) {
+        let genHand1 = getHand(h1, miniRemCards, h1.handConditions)
+        h1 = genHand1.hand
+        miniRemCards = genHand1.remainingCards
       }
+
+
+      if (h2.hand.length === 0) {
+        let genHand2 = getHand(h2, miniRemCards, h2.handConditions)
+        h2 = genHand2.hand
+        miniRemCards = genHand2.remainingCards
+      }
+
+
+
+      if (h3.hand.length === 0) {
+        let genHand3 = getHand(h3, miniRemCards, h3.handConditions)
+        h3 = genHand3.hand
+        miniRemCards = genHand3.remainingCards
+      }
+
+
+      if (h4.hand.length === 0) {
+        let genHand4 = getHand(h4, miniRemCards, h4.handConditions)
+        h4 = genHand4.hand
+        miniRemCards = genHand4.remainingCards
+      }
+
+      setRemainingCards(miniRemCards)
+
+      let newTable: Table = {
+        showTable: true,
+        hand1: h1,
+        hand2: h2,
+        hand3: h3,
+        hand4: h4,
+      }
+      setTable1(newTable)
     }
-    // setHand1(miniHand1)
-    refresh()
-    return undefined
+  }
+
+  function getHandConditionSeter(hand: Hand, tableName: "hand2" | "hand3" | "hand4") {
+    let tableNameMini = getConvertedNameOfHand(tableName)
+    return <div style={{ width: "375px", border: "1px solid black", margin: "10px", padding: "10px" }}>
+      <div>
+        <p style={{ margin: "0px", padding: "0px" }}>{tableNameMini}</p>
+        <span>Points:</span>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '5px', width: '180px' }}>
+            <label htmlFor="minPoints">min:</label>
+            <input
+              id="minPoints"
+              name="minPoints"
+              style={{ width: '50px' }}
+              value={hand.handConditions.points.min}
+              onChange={(e) => { setValueForHand(e, hand, tableName) }}
+            />
+          </div>
+          <div>
+            <label htmlFor="minPoints">max: </label>
+            <input
+              id="maxPoints"
+              name="maxPoints"
+              style={{ width: '50px' }}
+              value={hand.handConditions.points.max}
+              onChange={(e) => { setValueForHand(e, hand, tableName) }}
+            />
+          </div>
+        </div>
+      </div>
+      <span>Numbers:</span>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ width: '180px' }}>
+          <label htmlFor="numberSpadesMin">Spades (min): </label>
+          <input
+            id="numberSpadesMin"
+            name="numberSpadesMin"
+            style={{ width: '50px' }}
+            value={hand.handConditions.spades.min}
+            onChange={(e) => { setValueForHand(e, hand, tableName) }}
+          />
+        </div>
+        <div>
+          <label htmlFor="numberSpadesMax">Spades (max): </label>
+          <input
+            id="numberSpadesMax"
+            name="numberSpadesMax"
+            style={{ width: '50px' }}
+            value={hand.handConditions.spades.max}
+            onChange={(e) => { setValueForHand(e, hand, tableName) }}
+          />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ width: '180px' }}>
+          <label htmlFor="numberHeartsMin">Hearts (min): </label>
+          <input
+            id="numberHeartsMin"
+            name="numberHeartsMin"
+            style={{ width: '50px' }}
+            value={hand.handConditions.hearts.min}
+            onChange={(e) => { setValueForHand(e, hand, tableName) }}
+          />
+        </div>
+        <div>
+          <label htmlFor="numberHeartsMax">Hearts (max): </label>
+          <input
+            id="numberHeartsMax"
+            name="numberHeartsMax"
+            style={{ width: '50px' }}
+            value={hand.handConditions.hearts.max}
+            onChange={(e) => { setValueForHand(e, hand, tableName) }}
+          />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ width: '180px' }}>
+          <label htmlFor="numberDiamondsMin">Diamonds (min): </label>
+          <input
+            id="numberDiamondsMin"
+            name="numberDiamondsMin"
+            style={{ width: '50px' }}
+            value={hand.handConditions.diamonds.min}
+            onChange={(e) => { setValueForHand(e, hand, tableName) }}
+          />
+        </div>
+        <div>
+          <label htmlFor="numberDiamondsMax">Diamonds (max): </label>
+          <input
+            id="numberDiamondsMax"
+            name="numberDiamondsMax"
+            style={{ width: '50px' }}
+            value={hand.handConditions.diamonds.max}
+            onChange={(e) => { setValueForHand(e, hand, tableName) }}
+          />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ width: '180px' }}>
+          <label htmlFor="numberClubsMin">Clubs (min): </label>
+          <input
+            id="numberClubsMin"
+            name="numberClubsMin"
+            style={{ width: '50px' }}
+            value={hand.handConditions.clubs.min}
+            onChange={(e) => { setValueForHand(e, hand, tableName) }}
+          />
+        </div>
+        <div>
+          <label htmlFor="numberClubsMax">Clubs (max): </label>
+          <input
+            id="numberClubsMax"
+            name="numberClubsMax"
+            style={{ width: '50px' }}
+            value={hand.handConditions.clubs.max}
+            onChange={(e) => { setValueForHand(e, hand, tableName) }}
+          />
+        </div>
+      </div>
+    </div>
   }
 
   function modalAfterClose(foo: string[]): any {
     console.log(foo)
   }
 
+  if (tableView) {
+    return <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+      <Button onClick={() => {
+        setTableView(false)
+      }}>Table view</Button>
+      <div style={{ width: "700px", display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ width: "100%", justifyContent: "center", display: "flex" }}>
+          <Grid style={{ padding: "5px" }} item>{customList("hand2")}</Grid>
+        </div>
+        <div style={{ width: "100%", justifyContent: "space-between", display: "flex" }}>
+          <Grid style={{ padding: "5px" }} item>{customList("hand3")}</Grid>
+          <Grid style={{ padding: "5px" }} item>{customList("hand4")}</Grid>
+        </div>
+        <div style={{ width: "100%", justifyContent: "center", display: "flex" }}>
+          <Grid style={{ padding: "5px" }} item>{customList("hand1")}</Grid>
+        </div>
+      </div>
+    </div >
+  }
+
   return (
     <div className="App">
+      <Button onClick={() => {
+        setTableView(true)
+      }}>Table view</Button>
       <BasicModal
         emails={['username@gmail.com', 'user02@gmail.com']}
         onClose={modalAfterClose}></BasicModal>
       <div style={{ display: "flex" }}>
-        <Grid item>{customList("left")}</Grid>
+        <Grid item>{customList("coloda")}</Grid>
         <div style={{ display: "flex", alignItems: "center" }}>
           <div className='button-div'>
             <Button
@@ -694,7 +905,7 @@ function App() {
             </Button>
           </div>
         </div>
-        <Grid item>{customList("right")}</Grid>
+        <Grid item>{customList("hand1")}</Grid>
         <div style={{ display: "flex", alignItems: "center" }}>
           <div className='button-div'>
             <Button
@@ -705,6 +916,16 @@ function App() {
               aria-label="move selected left"
             >
               Gen hand2
+            </Button>
+          </div><div className='button-div'>
+            <Button
+              sx={{ my: 0.5 }}
+              variant="outlined"
+              size="small"
+              onClick={() => { genTable("table1") }}
+              aria-label="move selected left"
+            >
+              Gen table
             </Button>
           </div>
           <Grid item>{customList("hand2")}</Grid>
@@ -739,119 +960,10 @@ function App() {
           <Grid item>{customList("hand4")}</Grid>
         </div>
       </div>
-      <div>
-        <span>Points:</span>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ display: 'flex', gap: '5px', width: '180px' }}>
-            <label htmlFor="minPoints">min:</label>
-            <input
-              id="minPoints"
-              name="minPoints"
-              style={{ width: '50px' }}
-              value={hand1.handConditions.points.min}
-              onChange={(event) => setValueForHand("minPoints", event)}
-            />
-          </div>
-          <div>
-            <label htmlFor="minPoints">max: </label>
-            <input
-              id="maxPoints"
-              name="maxPoints"
-              style={{ width: '50px' }}
-              value={hand1.handConditions.points.max}
-              onChange={(event) => setValueForHand("maxPoints", event)}
-            />
-          </div>
-        </div>
-      </div>
-      <span>Numbers:</span>
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <div style={{ width: '180px' }}>
-          <label htmlFor="numberSpadesMin">Spades (min): </label>
-          <input
-            id="numberSpadesMin"
-            name="numberSpadesMin"
-            style={{ width: '50px' }}
-            value={hand1.handConditions.spades.min}
-            onChange={(event) => setValueForHand("numberSpadesMin", event)}
-          />
-        </div>
-        <div>
-          <label htmlFor="numberSpadesMax">Spades (max): </label>
-          <input
-            id="numberSpadesMax"
-            name="numberSpadesMax"
-            style={{ width: '50px' }}
-            value={hand1.handConditions.spades.max}
-            onChange={(event) => setValueForHand("numberSpadesMax", event)}
-          />
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <div style={{ width: '180px' }}>
-          <label htmlFor="numberHeartsMin">Hearts (min): </label>
-          <input
-            id="numberHeartsMin"
-            name="numberHeartsMin"
-            style={{ width: '50px' }}
-            value={hand1.handConditions.hearts.min}
-            onChange={(event) => setValueForHand("numberHeartsMin", event)}
-          />
-        </div>
-        <div>
-          <label htmlFor="numberHeartsMax">Hearts (max): </label>
-          <input
-            id="numberHeartsMax"
-            name="numberHeartsMax"
-            style={{ width: '50px' }}
-            value={hand1.handConditions.hearts.max}
-            onChange={(event) => setValueForHand("numberHeartsMax", event)}
-          />
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <div style={{ width: '180px' }}>
-          <label htmlFor="numberDiamondsMin">Diamonds (min): </label>
-          <input
-            id="numberDiamondsMin"
-            name="numberDiamondsMin"
-            style={{ width: '50px' }}
-            value={hand1.handConditions.diamonds.min}
-            onChange={(event) => setValueForHand("numberDiamondsMin", event)}
-          />
-        </div>
-        <div>
-          <label htmlFor="numberDiamondsMax">Diamonds (max): </label>
-          <input
-            id="numberDiamondsMax"
-            name="numberDiamondsMax"
-            style={{ width: '50px' }}
-            value={hand1.handConditions.diamonds.max}
-            onChange={(event) => setValueForHand("numberDiamondsMax", event)}
-          />
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <div style={{ width: '180px' }}>
-          <label htmlFor="numberClubsMin">Clubs (min): </label>
-          <input
-            id="numberClubsMin"
-            name="numberClubsMin"
-            style={{ width: '50px' }}
-            value={hand1.handConditions.clubs.min}
-            onChange={(event) => setValueForHand("numberClubsMin", event)}
-          />
-        </div>
-        <div>
-          <label htmlFor="numberClubsMax">Clubs (max): </label>
-          <input
-            id="numberClubsMax"
-            name="numberClubsMax"
-            style={{ width: '50px' }}
-            value={hand1.handConditions.clubs.max}
-            onChange={(event) => setValueForHand("numberClubsMax", event)}
-          />
-        </div>
+      <div style={{ display: "flex" }}>
+        {getHandConditionSeter(table1.hand2, "hand2")}
+        {getHandConditionSeter(table1.hand3, "hand3")}
+        {getHandConditionSeter(table1.hand4, "hand4")}
       </div>
     </div >
   );
